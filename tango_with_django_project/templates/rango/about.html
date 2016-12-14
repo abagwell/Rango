@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+<head>
+	<title>About</title>
+</head>
+<body>
+	<div>
+		<h1> Here I am!</h1>
+		Here is my message: 
+		<strong>{{ aboutMessage}}</strong>
+	</div>
+	<div>
+		<img src="{% static "images/myPic.jpg" %}" alt="my portrait" />
+		<br>
+		<a href="/rango">Index</a>
+	</div>
+</body>
+</html>
