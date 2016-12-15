@@ -2,3 +2,8 @@ OVERVIEW
 --------------
 
 The code in this repository is based off the tutorials presented in Tango with Django (1.9) by Leif Azzopardi and David Maxell.
+
+DESCRIPTION
+---------------
+
+Rango is a webpage directory, containing links to other websites. Rango groups websites into categories. Each category has a name, number of visits, and number of likes. 
