@@ -5,32 +5,66 @@ from rango.forms import CategoryForm, PageForm, UserForm, UserProfileForm
 from django.contrib.auth import authenticate, login, logout 
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from datetime import datetime
 
+#helper functions for cookie tracking
+
+def get_server_side_cookie(request, cookie, default_val=None):
+    val = request.session.get(cookie)
+    if not val:
+        val = default_val
+    return val 
+
+def visitor_cookie_handler(request):
+    visits = int(get_server_side_cookie(request, 'visits', '1'))
+
+    last_visit_cookie = get_server_side_cookie(request,'last_visit', str(datetime.now()))
+    
+    last_visit_time = datetime.strptime(last_visit_cookie[:-7], "%Y-%m-%d %H:%M:%S")
+
+    if (datetime.now() - last_visit_time).days > 0:
+        visits = visits + 1
+        request.session['last_visit'] = str(datetime.now())
+    else:
+        visits = 1
+        request.session['last_visit'] = last_visit_cookie
+
+    request.session['visits'] = visits
+
+#views
 
 def index(request):
-	#construct dict to pass to the template enginge as its context - the key is bold message and is the same as {{bold message}} from the template
-    
+	
+    #construct dict to pass to the template enginge as its context - the key is bold message and is the same as {{bold message}} from the template
     category_list = Category.objects.order_by('likes')[:5]
-
     context_dict = {'categories': category_list}
     
     view_list = Page.objects.order_by('views')[:5]
-    
     context_dict['pages'] = view_list
-	
-    #return the rendered response to the client, the first parameter is the template we want to use
 
-    return render(request, 'rango/index.html', context=context_dict)
+    
+    visitor_cookie_handler(request)
+    context_dict['visits'] = request.session['visits']
+
+    response = render(request, 'rango/index.html', context=context_dict)
+
+    return response 
+
+    #return the rendered response to the client, the first parameter is the template we want to use
+    #return render(request, 'rango/index.html', context=context_dict)
 
 def about(request):
+    
+    #for the test cookie
+    visitor_cookie_handler(request)
     context_dict = {'aboutMessage': 'I have added this message using a view!'}
+    context_dict["visits"] = request.session['visits']
     return render(request, 'rango/about.html', context=context_dict)
 
 def show_category(request, category_name_slug):
     context_dict = {}
 
     try:
-
         category = Category.objects.get(slug=category_name_slug)
         pages = Page.objects.filter(category=category)
         context_dict['pages'] = pages
@@ -132,7 +166,9 @@ def user_login(request):
 
 @login_required
 def restricted(request):
-    return HttpResponse("Since you're logged in, you can see this!")
+    context_dict = {'restrictedMessage': 'Since you are logged in, you can see this!'}
+    return render(request, 'rango/restricted.html', context=context_dict)
+    
 
 @login_required
 def user_logout(request):
